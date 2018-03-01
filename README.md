@@ -15,7 +15,7 @@ a) has fast computation, while b) can be slow to make predictions and needs care
 
 ## Synthetic data
 
-Since synthetic data is basically free for this usecase, it should be leveraged and also mixed with real data for additional performance(https://arxiv.org/abs/1706.06782 shows that for their usecase the mixing caused a huge increase in mean average precision(see figure 9)). After the network has been trained on synthetic data it would be easy for the network to display a rank of matching pieces. This would make it easy for a human to find the correct label in that rank and correct potential mistakes.
+Since synthetic data is basically free for this usecase, it should be leveraged and also mixed with real data for additional performance((this paper)[https://arxiv.org/abs/1706.06782) shows that for their usecase the mixing caused a huge increase in mean average precision(see figure 9)). After the network has been trained on synthetic data it would be easy for the network to display a rank of matching pieces. This would make it easy for a human to find the correct label in that ranking and correct potential mistakes.
 
 ### Generating data in blender
 
