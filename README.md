@@ -1,22 +1,60 @@
 
-# LEGO Piece Image Classification
+# LEGO Robotic Arm Classifier
 
-The final goal is to build a successfull classifier that takes in an image from some angle of a lego piece and then let a neural(or capsule) network determine which one it is.
+The final goal is to build some kind of robot arm that is capable of separating LEGO pieces from a pile and then identify which *exact piece* it is, so it can sort it accordingly. Then it would be possible to search a database for which LEGO sets can be built with it and also generate a list of which pieces a human must retrieve from each bin to have all the pieces one needs for the set. This solves the problem of entropy increasing in one's LEGO collection and one could even buy pieces in bulk and assemble sets with it to sell them.
 
+##### Why a robotic arm as opposed to a system of conveyor belts?
 
-## Model Architecture
+* Robotic arms are cool
+* One can easily repurpose a robotic arm for other tasks/experiments
+* It does not take up a lot of space
+* One can change the layout of the sorting bins as one pleases, as long as the robotic arm is reconfigured
+* Templates for 3D printing robotic arms can be found online, so one doesn't have to spent a lot of time engineering the intricacies of a conveyor belt system
 
-a) A capsule net that maps images into a latent space and a 3d convolutional net that maps the voxel representation of a 3d model of a piece into the same space. On that space you compute a metric like the cosine similarity to find the model a image is closest to.
+### Piece separation
 
-b) Only one Capsule net that maps images into a latent space. Then the true label of the image is estimated like this: Let a cluster of images be a set of images which belong to a piece. Then a image would belong to a cluster if the distance to it(in the latent space) is the lowest.
+It remains to be tested whether or not one can setup the robot arm to blindly try to grab a piece out of the container. Maybe it would only be able to grab a piece 50% of the times, which would look a bit silly, though it should be okay for the first attempt.
 
-a) has fast computation, while b) can be slow to make predictions and needs carefull optimization. But b) has less parameters and requires no 3d model and with that also no generation of a voxel representation of the model.
+If this does not work at all(or in ~10% of the cases), the complexity of the project would be considerably increased.
 
+* One solution would require us to either build a physical machine to separate the pieces, so one could use a kind of shovel on the arm's tip to pick the pieces up easily
 
-## Synthetic data
+* One could also build a neural network to use multiple cameras to predict the exact position and rotation the o f "robotic hand" on the arm's tip, such that when the "hand" closes it grabs a piece. That neural network would most likely need to use some kind of attention mechanism, because higher definition image data is only required for the region, where the piece of interest lies.
 
-Since synthetic data is basically free for this usecase, it should be leveraged and also mixed with real data for additional performance((this paper)[https://arxiv.org/abs/1706.06782) shows that for their usecase the mixing caused a huge increase in mean average precision(see figure 9)). After the network has been trained on synthetic data it would be easy for the network to display a rank of matching pieces. This would make it easy for a human to find the correct label in that ranking and correct potential mistakes.
+### Synthetic data
 
-### Generating data in blender
+Since synthetic data is basically free for this use case, it should be leveraged and also mixed with real data for additional performance([this paper](https://arxiv.org/abs/1706.06782) shows that for their use case the mixing caused a huge increase in mean average precision(see figure 9)). After the network has been trained on synthetic data it would be easy for the network to display a ranking list of pieces it believes match. This would make it easy for a human to find the correct label in that ranking and correct potential mistakes.
+
+#### Software for synthetic data
 
 First you will need to install blender and the ldraw import [plug-in](https://github.com/TobyLobster/ImportLDraw) and install it. Then you can run scripts by changing to script view and selecting the script you want to run(or modify and run). Note that on OSX and on Linux you need to run blender from the console to see debugging information that the executed script prints. On Windows you can open a console window inside blender.
+
+#### Data generation specifications
+
+To know exactly how the data should be generated, the robotic arm setup should be finished, so one should be able to emulate the environment.
+
+There a various ways to let the machine take pictures.
+* One can let it move the LEGO piece in front of some kind of white(?) screen(still having it in its grip) and then let cameras take pictures from multiple angles, or just having the robotic arm move such that the camera has a different view of the piece. The "robotic hand" would partially obstruct the view on the piece, so classification accuracy could be decreased.
+
+* Thus it might be wise to let it deposit the LEGO piece on a surface for a short amount of time, such that unobstructed pictures can be taken. But that introduces the seemingly trivial problem of picking the piece up again and requires an extra step. Nevertheless this is probably the best option for starters.
+
+
+### Model Architecture
+
+Capsule networks seem to be the perfect match for this use case, but training them takes many times the time to train a regular convolutional neural networks. Thus it is probably wiser to not use them only to gain a few percents in performance.
+
+Initially, the high number of classes seemed to be a major issue, but thanks to [candidate sampling and noise contrastive estimation(NCE)](https://www.tensorflow.org/extras/candidate_sampling.pdf) we can approach the task like a regular classification task. NCE doesn't compute probabilities for *every single* class, but takes the *true class label* and mixes it with a few *fake* ones, so the network has to figure out which of the class labels corresponds to the image. Note that the use of this loss was inspired by [word2vec](https://www.tensorflow.org/tutorials/word2vec), where they had a similar problem, since they had millions of word classes.
+
+Luckily tensorflow has a preimplemented nce-loss-function, so it was easy to construct an example of its usage for MNIST.
+
+### Classifying barely seen classes
+
+I think it might be possible to classify piece classes that weren't even present in the training set by giving 1 example of that class... We will see.
+
+### TODO list
+
+- [ ] See if it is possible to predict classes the network was not trained for
+- [ ] Generate synthetic data
+- [ ] Try the network on synthetic data
+- [ ] 3D print robotic arm and purchase motors
+- [ ] Check whether the robotic arm can blindly grab a piece semi-reliably

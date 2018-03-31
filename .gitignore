@@ -1,2 +1,7 @@
 .ipynb_checkpoints
 renders
+Classifiers/mnist_convnet_model
+Classifiers/mnist_nce_model
+Classifiers/__pycache__
+Classifiers/MNIST-data
+Classifiers/.idea
