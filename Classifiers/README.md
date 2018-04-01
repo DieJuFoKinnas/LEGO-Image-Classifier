@@ -1,1 +1,5 @@
-Currently this contains a regular mnist classifier, one with the NCE loss and one with a capsule network which isn't entirely finished, because training takes so long and CNNs are a better option.
+Currently this contains a regular mnist classifier and one with the NCE loss. Additionally there is an attemt to use capsule networks, although it probably doesn't work correctly, because I gave up on capsule networks when I saw that they take many times more to train in comparison to a CNN. But they are still an option for later. If you want to use them nevertheless, you need to install the capslayer library with:
+
+```
+pip install git+https://github.com/DieJuFoKinnas/CapsLayer
+```
