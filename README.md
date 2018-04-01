@@ -51,10 +51,3 @@ Luckily tensorflow has a preimplemented nce-loss-function, so it was easy to con
 
 I think it might be possible to classify piece classes that weren't even present in the training set by giving 1 example of that class... We will see.
 
-### TODO list
-
-- [ ] See if it is possible to predict classes the network was not trained for
-- [ ] Generate synthetic data
-- [ ] Try the network on synthetic data
-- [ ] 3D print robotic arm and purchase motors
-- [ ] Check whether the robotic arm can blindly grab a piece semi-reliably
