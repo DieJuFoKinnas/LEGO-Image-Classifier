@@ -43,15 +43,14 @@ def caps_model_fn(features, labels, mode):
     labels = tf.one_hot(labels, depth=classes, axis=1, dtype=tf.float32)
 
     # returns shape [batch_size, 20, 20, 256]
-    conv1 = tf.contrib.layers.conv2d(input_layer, num_outputs=256, kernel_size=9, stride=1, padding='VALID')
-
+    conv1 = tf.layers.conv2d(input_layer, 256, 9, strides=1, padding='VALID')
     # returns primaryCaps: [batch_size, 1152, 8, 1], activation: [batch_size, 1152]
     with tf.variable_scope('primary_caps'):
         primary_caps, activation = layers.primaryCaps(conv1, filters=32, kernel_size=9, strides=2, out_caps_shape=[8, 1])
 
     # return digitCaps: [batch_size, num_label, 16, 1], activation: [batch_size, num_label]
     with tf.variable_scope('digit_caps'):
-        primary_caps = tf.reshape(primary_caps, shape=[cfg.batch_size, -1, 8, 1])
+        # primary_caps = tf.reshape(primary_caps, shape=[cfg.batch_size, -1, 8, 1])
         digit_caps, activation = layers.fully_connected(primary_caps, activation, num_outputs=10, out_caps_shape=[16, 1],
                                                         routing_method='DynamicRouting')
 
@@ -118,21 +117,22 @@ def main(_):
     logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=500)
 
     # Train the model
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": train_data},
-      y=train_labels,
-      batch_size=cfg.batch_size,
-      num_epochs=None,
-      shuffle=True)
-    mnist_classifier.train(
-      input_fn=train_input_fn,
-      steps=100,
-      hooks=[logging_hook])
+    # train_input_fn = tf.estimator.inputs.numpy_input_fn(
+    #   x={"x": train_data},
+    #   y=train_labels,
+    #   batch_size=32,
+    #   num_epochs=None,
+    #   shuffle=True)
+    # mnist_classifier.train(
+    #   input_fn=train_input_fn,
+    #   steps=300,
+    #   hooks=[logging_hook])
 
     # Evaluate the model and print results
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
       x={"x": eval_data},
       y=eval_labels,
+      batch_size=32,
       num_epochs=1,
       shuffle=False)
     eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)

@@ -1,7 +1,7 @@
 
 # LEGO Robotic Arm Classifier
 
-The final goal is to build some kind of robot arm that is capable of separating LEGO pieces from a pile and then identify which *exact piece* it is, so it can sort it accordingly. Then it would be possible to search a database for which LEGO sets can be built with it and also generate a list of which pieces a human must retrieve from each bin to have all the pieces one needs for the set. This solves the problem of entropy increasing in one's LEGO collection and one could even buy pieces in bulk and assemble sets with it to sell them.
+The final goal is to build some kind of robot arm that is capable of separating LEGO pieces from a pile and then identify which *exact piece* it is, so it can sort it accordingly. Then it would be possible to search a database for which LEGO sets can be built with it and also generate a list of which pieces a human must retrieve from each bin to have all the pieces one needs for the set. This solves the problem of entropy increasing in one's LEGO collection, and for big LEGO fans it does save a huge amount of time that would be spent on sorting the collection and mantaining it sorted.
 
 ##### Why a robotic arm as opposed to a system of conveyor belts?
 
@@ -34,20 +34,28 @@ First you will need to install blender and the ldraw import [plug-in](https://gi
 To know exactly how the data should be generated, the robotic arm setup should be finished, so one should be able to emulate the environment.
 
 There a various ways to let the machine take pictures.
-* One can let it move the LEGO piece in front of some kind of white(?) screen(still having it in its grip) and then let cameras take pictures from multiple angles, or just having the robotic arm move such that the camera has a different view of the piece. The "robotic hand" would partially obstruct the view on the piece, so classification accuracy could be decreased.
+* One can let it move the LEGO piece in front of some kind of white(?) screen(still having it in its grip) and then let cameras take pictures from multiple angles, or just having the robotic arm move such that the camera has a different view of the piece. The "robotic hand" would partially obstruct the view on the piece, so classification accuracy could be decreased(though a smart neural network wouldn't mind). To use this with synthetic data one would need to somehow make a physics simulation with the gripper. The gripper can only grip the piece in a small amount of ways, so one could maybe take advantage of this with physics simulations, although this could have a rather small return on investment.
 
-* Thus it might be wise to let it deposit the LEGO piece on a surface for a short amount of time, such that unobstructed pictures can be taken. But that introduces the seemingly trivial problem of picking the piece up again and requires an extra step. Nevertheless this is probably the best option for starters.
+* It might be wise to let it deposit the LEGO piece on a surface for a short amount of time, such that unobstructed pictures can be taken. But that introduces the seemingly trivial problem of picking the piece up again and requires an extra step. Nevertheless, this option would also increase the classification accuracy since a given piece has a small amount of ways it can lay on the ground, so not all rotations in 3d space are possible. To fully take advantage of this with synthetic data, one would have to determine the ways a piece can land on the ground, which would most likely require a physics simulation, which complicates everything.
+
+The first option saves a step and the neural network can most likely deal with a small obstruction of the piece.
+
+To train the proof of concept neural network with synthetic data, placing the camera on a sphere surrounding the piece should be enough. What would be harder is to find a reasonable position for the piece, since in the real world the gripper does not always grip the piece perfectly in the center. To incorporate this into our data generation, we can sample the deviation from the sphere center from a normal distribution. Then one would only need to adjust the amount of standard deviations the sphere radius equals.
+
+Even though big pieces and small pieces are hard to fit into a frame with the same dimensions, doing otherwise would maybe only confuse the neural network, since then it would need to learn to be invariant to image scale.
 
 
 ### Model Architecture
 
-Capsule networks seem to be the perfect match for this use case, but training them takes many times the time to train a regular convolutional neural networks. Thus it is probably wiser to not use them only to gain a few percents in performance.
+Capsule networks seem to be the perfect match for this use case, but training them takes many times the time to train a regular convolutional neural network. Thus it is probably wiser to not use them only to gain a few percents in performance.
 
 Initially, the high number of classes seemed to be a major issue, but thanks to [candidate sampling and noise contrastive estimation(NCE)](https://www.tensorflow.org/extras/candidate_sampling.pdf) we can approach the task like a regular classification task. NCE doesn't compute probabilities for *every single* class, but takes the *true class label* and mixes it with a few *fake* ones, so the network has to figure out which of the class labels corresponds to the image. Note that the use of this loss was inspired by [word2vec](https://www.tensorflow.org/tutorials/word2vec), where they had a similar problem, since they had millions of word classes.
 
 Luckily tensorflow has a preimplemented nce-loss-function, so it was easy to construct an example of its usage for MNIST.
 
+The neural network system could also be enhanced by a weighting scale, because one can immediately discard a large amount of pieces if they have a very different weight.
+
+
 ### Classifying barely seen classes
 
 I think it might be possible to classify piece classes that weren't even present in the training set by giving 1 example of that class... We will see.
-
