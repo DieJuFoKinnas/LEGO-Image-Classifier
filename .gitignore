@@ -6,3 +6,5 @@ Classifiers/mnist_capsnet_model
 Classifiers/__pycache__
 Classifiers/MNIST-data
 Classifiers/.idea
+*.jpeg
+*.blend1

@@ -27,7 +27,7 @@ Since synthetic data is basically free for this use case, it should be leveraged
 
 #### Software for synthetic data
 
-First you will need to install blender and the ldraw import [plug-in](https://github.com/TobyLobster/ImportLDraw) and install it. Then you can run scripts by changing to script view and selecting the script you want to run(or modify and run). Note that on OSX and on Linux you need to run blender from the console to see debugging information that the executed script prints. On Windows you can open a console window inside blender.
+First you will need to install blender and the ldraw import [plug-in](https://github.com/TobyLobster/ImportLDraw) and install it. Then you can run scripts by changing to script view and selecting the script you want to run(or modify and run). Note that on OSX and on Linux you need to run blender from the console to see debugging information that the executed script prints. On Windows you can open a console window inside blender. Also you will need to find your blender configuration folder and change a line for the importldraw addon. For me it is located in ~/.config/blender/2.79/scripts/addons/io_scene_importldraw/loadldraw/loadldraw.py, but this may be different for your OS.
 
 #### Data generation specifications
 
