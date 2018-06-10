@@ -65,10 +65,19 @@ def make_rigid(lego_piece, lego_material):
     #for i in range(1, material_count):
     #    lego_piece.data.materials[i] = lego_piece.data.materials[i - 1]
 
-    lego_piece.data.materials[0] = lego_material
     
-    #lego_piece.data.materials.append(lego_material)
+    #lego_piece.data.materials[0] = lego_material
+    
+    lego_piece.data.materials.append(lego_material)
 
+    for area in bpy.context.screen.areas:
+        if area.type == 'PROPERTIES':
+            ctx = bpy.context.copy()
+            ctx['area'] = area
+            ctx['region'] = area.regions[-1] 
+
+    # you have to also make the piece active so it lets you add the rigidbody
+    bpy.context.scene.objects.active = lego_piece
     bpy.ops.object.select_all(action='DESELECT')
     lego_piece.select = True
 
@@ -77,7 +86,7 @@ def make_rigid(lego_piece, lego_material):
     bpy.context.active_object.rigid_body.collision_shape = 'CONVEX_HULL'
 
 
-def simulate_drop(lego_piece, epsilon=5.0e-06):
+def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000):
     # set current frame and autoupdates
     scene.frame_set(1)
     
@@ -86,7 +95,7 @@ def simulate_drop(lego_piece, epsilon=5.0e-06):
     diff = 1.0
     
     # keep the animation going until the piece doesn't move anymore
-    while(diff > epsilon or scene.frame_current < 20):
+    while((diff > epsilon or scene.frame_current < min_frames) and scene.frame_current < max_frames):
         scene.frame_set(bpy.context.scene.frame_current + 1)
         
         old_matrix = current_matrix.copy()
@@ -104,7 +113,13 @@ def render(render_path, shot_name):
     context.scene.render.filepath = os.path.join(render_path, shot_name + '.jpeg')
     bpy.ops.render.render(write_still=True)
 
-# lego_piece=load_piece(os.path.join(models_path,os.listdir(models_path)[67]))
+
+def debug_load(i, lego_material):
+    lego_piece=load_piece(os.path.join(models_path,os.listdir(models_path)[i]))
+    position_piece(lego_piece)
+    make_rigid(lego_piece, lego_material)
+
+
 if __name__ == "__main__":
     lego_material = generate_base_scene.generate()
 
@@ -119,6 +134,9 @@ if __name__ == "__main__":
         for render_number in range(renders_per_model):
             position_piece(lego_piece)
             simulate_drop(lego_piece)
+            # TODO: place camera
+            # TODO: if simulations take too long, it is possible to place the camera multiple
+            # times per drop
             #for current_angle in range(camera_angle_count):
                 #position_camera(scene.camera, camera_angle_count, current_angle)
             render(render_path, "{}-{}".format(model_name(piece_name), render_number))

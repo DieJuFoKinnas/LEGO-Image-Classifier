@@ -19,6 +19,12 @@ pi_cam_v1_specs = { "lens": 3.6, "sensor_width": 3.67, "sensor_height": 2.74 }
 scene = bpy.context.scene
 
 
+def get_area(type):
+    for area in bpy.context.screen.areas:
+        if area.type == type:
+            return area
+
+
 def clear_everything():
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete()
@@ -94,12 +100,12 @@ def add_light(name, light_material, angle, x_position):
 
 
 def add_base_plate():
-    for area in bpy.context.screen.areas:#this is needed for setting the right context, without it the operation would fail https://blender.stackexchange.com/a/53707
-        if area.type == 'VIEW_3D':
-            ctx = bpy.context.copy()
-            ctx['area'] = area
-            ctx['region'] = area.regions[-1] 
-            bpy.ops.view3d.snap_cursor_to_center(ctx)
+    area = get_area('VIEW_3D')#this is needed for setting the right context, without it the operation would fail https://blender.stackexchange.com/a/53707
+    ctx = bpy.context.copy()
+    ctx['area'] = area
+    ctx['region'] = area.regions[-1] 
+    bpy.ops.view3d.snap_cursor_to_center(ctx)
+
     bpy.ops.mesh.primitive_plane_add()
     bpy.context.active_object.name = 'base_plate'
     scene.objects.active.scale = (9,5,1)
