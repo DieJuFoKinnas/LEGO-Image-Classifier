@@ -1,20 +1,23 @@
 import bpy
 import os
 
+# TODO: set correct resolution
 # TODO:reminder:focus pi camera!!!!
 # camera intrinsics for Pi Camera v2
 # Sensor size: 3.674 x 2.760 mm (1/4" format in 4:3)
 # Lens: f=3.04 mm, f/2.0
 # Angle of View: 62.2 x 48.8 degrees
 # Full-frame SLR lens equivalent: 29 mm
-pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760 }
+pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760,
+                 "resolution_x": 256, "resolution_y": 144}
 
 # camera intrinsics for Pi Camera v1
 # Sensor size: 3.67 x 2.74 mm (1/4" format in 4:3)
 # Lens: f=3.6 mm, f/2.9
 # Angle of View: 54 x 41 degrees
 # Full-frame SLR lens equivalent: 35 mm
-pi_cam_v1_specs = { "lens": 3.6, "sensor_width": 3.67, "sensor_height": 2.74 }
+pi_cam_v1_specs = { "lens": 3.6, "sensor_width": 3.67, "sensor_height": 2.74,
+                    "resolution_x": 256, "resolution_y": 144 }
 
 scene = bpy.context.scene
 
@@ -85,8 +88,10 @@ def setup_camera(specs, name):
     # add to scene and update scene
     bpy.context.scene.objects.link(camera)
     bpy.context.scene.update()
-    # move camera into position
-    # select the camera for rendering
+    
+    bpy.context.scene.render.resolution_x = specs["resolution_x"]
+    bpy.context.scene.render.resolution_y = specs["resolution_y"]
+
     scene.camera = camera
 
 

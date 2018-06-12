@@ -4,13 +4,14 @@ import os
 from random import uniform
 import math
 import numpy as np
+from mathutils import Quaternion, Vector
 
 import generate_base_scene
 
 
-max_piece_count = 2
-renders_per_model = 2
-camera_angle_count = 2
+max_piece_count = 1
+renders_per_model = 1
+camera_angle_count = 1
 
 models_path = "/home/adrian/Downloads/ldraw/parts/"
 render_path = "/home/adrian/Projects/JuFoLego/renders/"
@@ -45,11 +46,29 @@ def load_piece(model_path):
     # TODO: not sure if the default material is fine
     return lego_piece
 
-def camera_angles(camera, camera_angle_count, current_angle, height=10, radius=3):
-    # place cammera somewhere on an imaginary circle
-    angle = 2 * math.pi * current_angle / camera_angle_count
-    camera.location = (radius * math.cos(angle), radius * math.sin(angle), height)
-    # rotation stuff seems quite hard
+
+# axis_x, ... are the components of the rotation axis. The axis vector should have a norm of 1.
+def quaternion_from_rotation(angle, axis_x, axis_y, axis_z):
+    sine = math.sin(angle/2)
+    return Quaternion([math.cos(angle/2), sine * axis_x, sine * axis_y, sine * axis_z])
+
+
+# note that current angle is expected to be an integer
+def position_camera(camera, camera_angle_count, current_angle, height=5, radius=3):
+    # place cammera somewhere on an imaginary circle and then rotate it to the origin
+    z_angle = 2 * math.pi * current_angle / camera_angle_count
+    camera.location = (radius * math.cos(z_angle), radius * math.sin(z_angle), height)
+    
+    # using quaternions here, since you can easily concatenate their rotations
+    base_rotation = quaternion_from_rotation(math.pi/2, 0, 0, 1)
+    
+    to_origin = -camera.location
+    to_origin.normalize()
+    y_angle = math.acos(to_origin * Vector([0, 0, -1])) # angle between vector to origin and vertical vector
+    y_rotation = quaternion_from_rotation(y_angle, 0, 1, 0)
+    z_rotation = quaternion_from_rotation(z_angle, 0, 0, 1)
+    
+    camera.rotation_quaternion = z_rotation * y_rotation * base_rotation
 
 
 def position_piece(lego_piece):
@@ -59,22 +78,7 @@ def position_piece(lego_piece):
     
 
 def make_rigid(lego_piece, lego_material):
-    #material_count = len(lego_piece.data.materials)
-    
-    #lego_piece.data.materials.append(lego_piece.data.materials[material_count - 1])
-    #for i in range(1, material_count):
-    #    lego_piece.data.materials[i] = lego_piece.data.materials[i - 1]
-
-    
-    #lego_piece.data.materials[0] = lego_material
-    
     lego_piece.data.materials.append(lego_material)
-
-    for area in bpy.context.screen.areas:
-        if area.type == 'PROPERTIES':
-            ctx = bpy.context.copy()
-            ctx['area'] = area
-            ctx['region'] = area.regions[-1] 
 
     # you have to also make the piece active so it lets you add the rigidbody
     bpy.context.scene.objects.active = lego_piece
@@ -115,9 +119,12 @@ def render(render_path, shot_name):
 
 
 def debug_load(i, lego_material):
-    lego_piece=load_piece(os.path.join(models_path,os.listdir(models_path)[i]))
+    path = os.path.join(models_path,os.listdir(models_path)[i])
+    lego_piece = load_piece(path)
     position_piece(lego_piece)
     make_rigid(lego_piece, lego_material)
+    
+    return lego_piece
 
 
 if __name__ == "__main__":
@@ -129,17 +136,18 @@ if __name__ == "__main__":
 
     for model_path in model_paths:
         lego_piece = load_piece(model_path)
+        
+        # for some reason importldraw overwrites this every time
+        camera.rotation_mode = "QUATERNION"
+
         position_piece(lego_piece)
         make_rigid(lego_piece, lego_material)
         for render_number in range(renders_per_model):
             position_piece(lego_piece)
             simulate_drop(lego_piece)
-            # TODO: place camera
-            # TODO: if simulations take too long, it is possible to place the camera multiple
-            # times per drop
-            #for current_angle in range(camera_angle_count):
-                #position_camera(scene.camera, camera_angle_count, current_angle)
-            render(render_path, "{}-{}".format(model_name(piece_name), render_number))
+            for current_angle in range(camera_angle_count):
+                position_camera(scene.camera, camera_angle_count, current_angle)
+                render(render_path, "{}-{}".format(model_name(piece_name), render_number))
             
         remove_object(lego_piece)
 
