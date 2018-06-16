@@ -1,26 +1,41 @@
 # This script is intended to be used from inside blender. You can debug it easily by using os.chdir into the directory that contains this script by importing it, and then executing its functions manually.
 import bpy
+import time
 import os
 from random import uniform
 import math
+import sys
 import numpy as np
 from mathutils import Quaternion, Vector
 
 import generate_base_scene
 
 
-max_piece_count = 1
-renders_per_model = 1
+simulations_per_model = 1
 camera_angle_count = 1
+piece_count = 15
+debug_mode = True
 
 models_path = "/home/adrian/Downloads/ldraw/parts/"
-render_path = "/home/adrian/Projects/JuFoLego/renders/"
+render_path = "renders/"
 
 scene = bpy.context.scene
 
 
-def model_name(filename):
-    return filename.split('.')[0]
+def drop_extension(filename):
+    return str.split(filename, ".")[0]
+
+
+def get_paths():
+    filenames = os.listdir(models_path)
+    all_paths = [(filename, os.path.join(models_path, filename)) for filename in filenames]
+    all_models = [(drop_extension(name), path) for name, path in all_paths if not os.path.isdir(path)]
+    # Yes, I'm racist and I'm excluding half of the parts simply because they have letters in their name.
+    # In the future the list of rendered models can be extended to be more exhaustive, though thats
+    # not required for now since ~5000 pieces is enough
+    acceptable_models = [(name, path) for name, path in all_models if str.isnumeric(name)]
+    
+    return acceptable_models
 
 
 def remove_object(object):
@@ -30,21 +45,43 @@ def remove_object(object):
 
 
 def load_piece(model_path):
+    print("loading {}".format(model_path))
     bpy.ops.import_scene.importldraw(filepath=model_path)
     # bpy.ops.import_mesh.stl(filepath = lego_piece_code +".stl")#no ovearhead test
-    
-    for object in bpy.context.scene.objects:
-        if ".dat" in object.name:
-            lego_piece = object
 
-    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME')
+    components = [c for c in bpy.context.scene.objects if ".dat" in c.name]
 
     ground_plane = bpy.context.scene.objects["LegoGroundPlane"]
     remove_object(ground_plane)
 
-    # TODO: I don't know whether I need to join the piece
-    # TODO: not sure if the default material is fine
-    return lego_piece
+    # for some reason importldraw overwrites this every time
+    scene.camera.rotation_mode = "QUATERNION"
+    
+    return components
+
+# I do not know how this affects material and reder properties, since in reality a piece could consist
+# of multiple materials
+def join_components(components):
+    if len(components) == 1:
+        return components[0]
+    else:
+        for c in components:
+            c.select = True
+        
+        piece = [c for c in components if c.type == "MESH"][0]
+        scene.objects.active = piece
+        bpy.ops.object.join()
+        bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
+        
+        joined = piece.copy()
+
+        parents = [c for c in components if c.type != "MESH" and not c.parent]
+        joined.name = parents[0].name
+        
+        [remove_object(c) for c in components]
+        scene.objects.link(joined)
+        return joined
+    
 
 
 # axis_x, ... are the components of the rotation axis. The axis vector should have a norm of 1.
@@ -118,36 +155,41 @@ def render(render_path, shot_name):
     bpy.ops.render.render(write_still=True)
 
 
-def debug_load(i, lego_material):
-    path = os.path.join(models_path,os.listdir(models_path)[i])
-    lego_piece = load_piece(path)
+# for testing purposes: 4767.dat is has multiple parts
+# TODO: 480.dat and 483.dat are invisible??? They seem to roll out of the frame
+# use this for testing purposes by importing it in the console
+def debug_load(name):
+    lego_material = generate_base_scene.generate()
+    lego_piece = join_components(load_piece("{}/{}".format(models_path, name)))
     position_piece(lego_piece)
     make_rigid(lego_piece, lego_material)
-    
+    simulate_drop(lego_piece)
+
     return lego_piece
 
 
 if __name__ == "__main__":
     lego_material = generate_base_scene.generate()
+    
+    position_camera(scene.camera, 10, 1)
+    ctx = generate_base_scene.get_view3d_context()
+    #bpy.ops.view3d.viewnumpad(ctx, type='CAMERA')
 
-    filenames = os.listdir(models_path)[:max_piece_count]
-    all_paths = [os.path.join(models_path, filename) for filename in filenames]
-    model_paths = [path for path in all_paths if not os.path.isdir(path)]
-
-    for model_path in model_paths:
-        lego_piece = load_piece(model_path)
-        
-        # for some reason importldraw overwrites this every time
-        camera.rotation_mode = "QUATERNION"
+    for piece_name, model_path in get_paths()[:piece_count]:
+        components = load_piece(model_path)
+        lego_piece = join_components(components)
 
         position_piece(lego_piece)
         make_rigid(lego_piece, lego_material)
-        for render_number in range(renders_per_model):
+        for simulation_number in range(simulations_per_model):
             position_piece(lego_piece)
             simulate_drop(lego_piece)
             for current_angle in range(camera_angle_count):
                 position_camera(scene.camera, camera_angle_count, current_angle)
-                render(render_path, "{}-{}".format(model_name(piece_name), render_number))
+                render(render_path, "{}-{}".format(drop_extension(piece_name), simulation_number))
+
+            if debug_mode:
+                input("press enter for loading the next piece")
             
         remove_object(lego_piece)
 

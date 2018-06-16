@@ -9,7 +9,9 @@ import os
 # Angle of View: 62.2 x 48.8 degrees
 # Full-frame SLR lens equivalent: 29 mm
 pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760,
-                 "resolution_x": 256, "resolution_y": 144}
+                 "resolution_x": 1280, "resolution_y": 1080}
+# NOTE: when using lower resolutions the frame gets smaller, so the camera has to be placed
+# proportionally further
 
 # camera intrinsics for Pi Camera v1
 # Sensor size: 3.67 x 2.74 mm (1/4" format in 4:3)
@@ -17,7 +19,7 @@ pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760,
 # Angle of View: 54 x 41 degrees
 # Full-frame SLR lens equivalent: 35 mm
 pi_cam_v1_specs = { "lens": 3.6, "sensor_width": 3.67, "sensor_height": 2.74,
-                    "resolution_x": 256, "resolution_y": 144 }
+                    "resolution_x": 1280, "resolution_y": 1080 }
 
 scene = bpy.context.scene
 
@@ -26,6 +28,16 @@ def get_area(type):
     for area in bpy.context.screen.areas:
         if area.type == type:
             return area
+
+
+# this is needed for setting the right context, without it the operation would fail https://blender.stackexchange.com/a/53707
+def get_view3d_context():
+    area = get_area('VIEW_3D')
+    ctx = bpy.context.copy()
+    ctx['area'] = area
+    ctx['region'] = area.regions[-1] 
+    
+    return ctx
 
 
 def clear_everything():
@@ -53,6 +65,8 @@ def load_settings():
     bpy.ops.script.python_file_run(filepath=os.path.join(path, "presets", "framerate", "60.py"))
     #set current frame (it autoupdates)
     bpy.context.scene.frame_set(1)
+
+    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
 
 
 def load_lego_material():
@@ -105,17 +119,15 @@ def add_light(name, light_material, angle, x_position):
 
 
 def add_base_plate():
-    area = get_area('VIEW_3D')#this is needed for setting the right context, without it the operation would fail https://blender.stackexchange.com/a/53707
-    ctx = bpy.context.copy()
-    ctx['area'] = area
-    ctx['region'] = area.regions[-1] 
+    ctx = get_view3d_context()
     bpy.ops.view3d.snap_cursor_to_center(ctx)
 
     bpy.ops.mesh.primitive_plane_add()
     bpy.context.active_object.name = 'base_plate'
     scene.objects.active.scale = (9,5,1)
     bpy.ops.rigidbody.objects_add(type='PASSIVE')
-    bpy.context.active_object.rigid_body.friction = 0.99 #more friction => faster settletime => shorter simulation
+    # more friction => faster settletime => shorter simulation
+    bpy.context.active_object.rigid_body.friction = 0.99
     bpy.context.active_object.rigid_body.collision_shape = 'MESH'
 
 

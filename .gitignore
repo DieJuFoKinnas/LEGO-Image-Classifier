@@ -1,5 +1,5 @@
 .ipynb_checkpoints
-renders
+renders/
 Classifiers/mnist_convnet_model
 Classifiers/mnist_nce_model
 Classifiers/mnist_capsnet_model
