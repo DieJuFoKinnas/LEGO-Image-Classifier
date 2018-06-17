@@ -63,6 +63,9 @@ def load_piece(model_path):
 # of multiple materials
 def join_components(components):
     if len(components) == 1:
+        bpy.ops.object.select_all(action='DESELECT')
+        components[0].select = True
+        bpy.ops.object.origin_set(type="ORIGIN_CENTER_OF_MASS")
         return components[0]
     else:
         for c in components:
