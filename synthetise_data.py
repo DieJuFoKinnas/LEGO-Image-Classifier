@@ -2,7 +2,7 @@
 import bpy
 import time
 import os
-from random import uniform
+from random import uniform, gauss
 import math
 import sys
 import numpy as np
@@ -94,9 +94,12 @@ def quaternion_from_rotation(angle, axis_x, axis_y, axis_z):
 
 
 # note that current angle is expected to be an integer
-def position_camera(camera, camera_angle_count, current_angle, height=5, radius=3):
+def position_camera(camera, height=5, radius=3, std_dev=0.4):
+    height = height + gauss(0, std_dev)
+    radius = height + gauss(0, std_dev)
+    
     # place cammera somewhere on an imaginary circle and then rotate it to the origin
-    z_angle = 2 * math.pi * current_angle / camera_angle_count
+    z_angle = uniform(0, 2*math.pi)
     camera.location = (radius * math.cos(z_angle), radius * math.sin(z_angle), height)
     
     # using quaternions here, since you can easily concatenate their rotations
@@ -111,9 +114,10 @@ def position_camera(camera, camera_angle_count, current_angle, height=5, radius=
     camera.rotation_quaternion = z_rotation * y_rotation * base_rotation
 
 
-def position_piece(lego_piece):
+def position_piece(lego_piece, min_height=0.1, average_height=0.2, std_dev=0.2):
     diagonal_length = np.linalg.norm(np.array(lego_piece.dimensions))
-    lego_piece.location = (0, 0, diagonal_length / 2 + 0.1)
+    height = diagonal_length / 2 + min(min_height, gauss(average_height, std_dev))
+    lego_piece.location = (gauss(0, std_dev), gauss(0, std_dev), height)
     lego_piece.rotation_euler = uniform(0, 2*math.pi),uniform(0, 2*math.pi),uniform(0, 2*math.pi)
     
 
@@ -164,6 +168,7 @@ def render(render_path, shot_name):
 def debug_load(name):
     lego_material = generate_base_scene.generate()
     lego_piece = join_components(load_piece("{}/{}".format(models_path, name)))
+    position_camera(scene.camera)
     position_piece(lego_piece)
     make_rigid(lego_piece, lego_material)
     simulate_drop(lego_piece)
@@ -175,8 +180,6 @@ if __name__ == "__main__":
     lego_material = generate_base_scene.generate()
     
     position_camera(scene.camera, 10, 1)
-    ctx = generate_base_scene.get_view3d_context()
-    #bpy.ops.view3d.viewnumpad(ctx, type='CAMERA')
 
     for piece_name, model_path in get_paths()[:piece_count]:
         components = load_piece(model_path)
@@ -188,7 +191,7 @@ if __name__ == "__main__":
             position_piece(lego_piece)
             simulate_drop(lego_piece)
             for current_angle in range(camera_angle_count):
-                position_camera(scene.camera, camera_angle_count, current_angle)
+                position_camera(scene.camera)
                 render(render_path, "{}-{}".format(drop_extension(piece_name), simulation_number))
 
             if debug_mode:
