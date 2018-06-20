@@ -1,5 +1,6 @@
 import bpy
 import os
+import math
 
 # TODO: set correct resolution
 # TODO:reminder:focus pi camera!!!!
@@ -124,7 +125,7 @@ def add_base_plate():
 
     bpy.ops.mesh.primitive_plane_add()
     bpy.context.active_object.name = 'base_plate'
-    scene.objects.active.scale = (9,5,1)
+    scene.objects.active.scale = (9,9,1)
     bpy.ops.rigidbody.objects_add(type='PASSIVE')
     # more friction => faster settletime => shorter simulation
     bpy.context.active_object.rigid_body.friction = 0.99
@@ -138,6 +139,7 @@ def generate():
     add_light("light_1", light_material, 45, 7)
     add_light("light_2", light_material, -45, -7)
     load_settings()
+
     add_base_plate()
     setup_camera(pi_cam_specs, "pi_cam")
     

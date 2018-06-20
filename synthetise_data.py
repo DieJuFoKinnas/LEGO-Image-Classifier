@@ -13,7 +13,7 @@ import generate_base_scene
 
 simulations_per_model = 1
 camera_angle_count = 1
-piece_count = 15
+piece_count = 100
 debug_mode = True
 
 models_path = "/home/adrian/Downloads/ldraw/parts/"
@@ -94,7 +94,7 @@ def quaternion_from_rotation(angle, axis_x, axis_y, axis_z):
 
 
 # note that current angle is expected to be an integer
-def position_camera(camera, height=5, radius=3, std_dev=0.4):
+def position_camera(camera, height=4, radius=3, std_dev=0.4):
     height = height + gauss(0, std_dev)
     radius = height + gauss(0, std_dev)
     
@@ -114,12 +114,11 @@ def position_camera(camera, height=5, radius=3, std_dev=0.4):
     camera.rotation_quaternion = z_rotation * y_rotation * base_rotation
 
 
-def position_piece(lego_piece, min_height=0.1, average_height=0.2, std_dev=0.2):
-    diagonal_length = np.linalg.norm(np.array(lego_piece.dimensions))
-    height = diagonal_length / 2 + min(min_height, gauss(average_height, std_dev))
-    lego_piece.location = (gauss(0, std_dev), gauss(0, std_dev), height)
+def position_piece(lego_piece, min_height=0.2, average_height=0.3, std_dev=0.4):
+    diagonal_length = np.linalg.norm(np.array(lego_piece.dimensions)) # placing it makes it sometimes appear inside the ground
+    lego_piece.location = (gauss(0, std_dev), gauss(0, std_dev), diagonal_length)
     lego_piece.rotation_euler = uniform(0, 2*math.pi),uniform(0, 2*math.pi),uniform(0, 2*math.pi)
-    
+
 
 def make_rigid(lego_piece, lego_material):
     lego_piece.data.materials.append(lego_material)
@@ -134,7 +133,12 @@ def make_rigid(lego_piece, lego_material):
     bpy.context.active_object.rigid_body.collision_shape = 'CONVEX_HULL'
 
 
-def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000):
+def distance_from_origin(object):
+    x, y, _ = object.matrix_world * Vector([0, 0, 0])
+    return np.linalg.norm(np.array([x, y]))
+
+
+def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000, max_distance_from_origin=1.8):
     # set current frame and autoupdates
     scene.frame_set(1)
     
@@ -142,8 +146,8 @@ def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000):
     current_matrix = np.array(lego_piece.matrix_world)
     diff = 1.0
     
-    # keep the animation going until the piece doesn't move anymore
-    while((diff > epsilon or scene.frame_current < min_frames) and scene.frame_current < max_frames):
+    # keep the animation going until the piece doesn't move anymore or it is about to roll out of the frame
+    while(diff > epsilon and scene.frame_current < max_frames and distance_from_origin(lego_piece) < max_distance_from_origin):
         scene.frame_set(bpy.context.scene.frame_current + 1)
         
         old_matrix = current_matrix.copy()
@@ -162,8 +166,8 @@ def render(render_path, shot_name):
     bpy.ops.render.render(write_still=True)
 
 
-# for testing purposes: 4767.dat is has multiple parts
-# TODO: 480.dat and 483.dat are invisible??? They seem to roll out of the frame
+# for testing purposes: 4767.dat is has multiple parts and 480.dat rolls
+# TODO: when we scale this to more pieces, huge pieces like 6024 should be excluded
 # use this for testing purposes by importing it in the console
 def debug_load(name):
     lego_material = generate_base_scene.generate()
@@ -172,6 +176,9 @@ def debug_load(name):
     position_piece(lego_piece)
     make_rigid(lego_piece, lego_material)
     simulate_drop(lego_piece)
+    
+    ctx = generate_base_scene.get_view3d_context()
+    bpy.ops.view3d.viewnumpad(ctx, type='CAMERA')
 
     return lego_piece
 
@@ -181,7 +188,7 @@ if __name__ == "__main__":
     
     position_camera(scene.camera, 10, 1)
 
-    for piece_name, model_path in get_paths()[:piece_count]:
+    for i, (piece_name, model_path) in list(enumerate(get_paths()))[:piece_count]:
         components = load_piece(model_path)
         lego_piece = join_components(components)
 
@@ -195,7 +202,7 @@ if __name__ == "__main__":
                 render(render_path, "{}-{}".format(drop_extension(piece_name), simulation_number))
 
             if debug_mode:
-                input("press enter for loading the next piece")
+                input("press enter for loading the next piece(currently at piece {})".format(i))
             
         remove_object(lego_piece)
 
