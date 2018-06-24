@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from config import cfg
+from config_capsules import cfg
 from capslayer import layers
 
 tf.logging.set_verbosity(tf.logging.INFO)

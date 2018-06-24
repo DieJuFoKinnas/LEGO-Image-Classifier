@@ -8,3 +8,4 @@ Classifiers/MNIST-data
 Classifiers/.idea
 *.jpeg
 *.blend1
+*.pyc

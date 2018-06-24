@@ -167,7 +167,9 @@ def render(render_path, shot_name):
 
 
 # for testing purposes: 4767.dat is has multiple parts and 480.dat rolls
-# TODO: when we scale this to more pieces, huge pieces like 6024 should be excluded
+# TODO: when we scale this to more pieces, huge pieces like 6024.dat should be excluded
+# TODO: when we scale this, sticker-pieces should be exclude(either excluding the piece numbers corresponding to stickers
+# (this is documented in the ldraw piece numbering FAQ) or by checking for a completely flat z-dimension(probably easier))
 # use this for testing purposes by importing it in the console
 def debug_load(name):
     lego_material = generate_base_scene.generate()
