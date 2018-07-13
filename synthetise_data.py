@@ -16,7 +16,7 @@ camera_angle_count = 1
 piece_count = 100
 debug_mode = True
 
-models_path = "/home/adrian/Downloads/ldraw/parts/"
+models_path = "/home/adrian/ldraw/parts/"
 render_path = "renders/"
 
 scene = bpy.context.scene
@@ -134,11 +134,21 @@ def make_rigid(lego_piece, lego_material):
 
 
 def distance_from_origin(object):
-    x, y, _ = object.matrix_world * Vector([0, 0, 0])
+    x, y, _ = object.matrix_world.to_translation()
     return np.linalg.norm(np.array([x, y]))
 
 
-def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000, max_distance_from_origin=1.8):
+def reposition_piece(lego_piece, x, y):
+    matrix = lego_piece.matrix_world.copy()
+    
+    matrix[0][3] = x
+    matrix[1][3] = y
+    
+    lego_piece.matrix_world = matrix
+    scene.frame_set(1)
+
+
+def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000, max_distance_from_origin=4.5, repositioning_std_dev=0.6):
     # set current frame and autoupdates
     scene.frame_set(1)
     
@@ -155,6 +165,8 @@ def simulate_drop(lego_piece, epsilon=5.0e-06, min_frames=20, max_frames=5000, m
         diff = np.linalg.norm(old_matrix - current_matrix)
 
         scene.rigidbody_world.point_cache.frame_end = scene.frame_current + 1 # increase the rigid body buffer size for next step
+    
+    reposition_piece(lego_piece, gauss(0, repositioning_std_dev), gauss(0, repositioning_std_dev))
     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)#HACK: update window
 
 
@@ -201,10 +213,11 @@ if __name__ == "__main__":
             simulate_drop(lego_piece)
             for current_angle in range(camera_angle_count):
                 position_camera(scene.camera)
-                render(render_path, "{}-{}".format(drop_extension(piece_name), simulation_number))
 
             if debug_mode:
                 input("press enter for loading the next piece(currently at piece {})".format(i))
+            else:
+                render(render_path, "{}-{}".format(drop_extension(piece_name), simulation_number))
             
         remove_object(lego_piece)
 
