@@ -9,8 +9,7 @@ import math
 # Lens: f=3.04 mm, f/2.0
 # Angle of View: 62.2 x 48.8 degrees
 # Full-frame SLR lens equivalent: 29 mm
-pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760,
-                 "resolution_x": 1280, "resolution_y": 1080}
+pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760 }
 # NOTE: when using lower resolutions the frame gets smaller, so the camera has to be placed
 # proportionally further
 
@@ -19,8 +18,7 @@ pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760,
 # Lens: f=3.6 mm, f/2.9
 # Angle of View: 54 x 41 degrees
 # Full-frame SLR lens equivalent: 35 mm
-pi_cam_v1_specs = { "lens": 3.6, "sensor_width": 3.67, "sensor_height": 2.74,
-                    "resolution_x": 1280, "resolution_y": 1080 }
+pi_cam_v1_specs = { "lens": 3.6, "sensor_width": 3.67, "sensor_height": 2.74 }
 
 scene = bpy.context.scene
 
@@ -103,9 +101,6 @@ def setup_camera(specs, name):
     # add to scene and update scene
     bpy.context.scene.objects.link(camera)
     bpy.context.scene.update()
-    
-    bpy.context.scene.render.resolution_x = specs["resolution_x"]
-    bpy.context.scene.render.resolution_y = specs["resolution_y"]
 
     scene.camera = camera
 
@@ -130,6 +125,7 @@ def add_base_plate():
     # more friction => faster settletime => shorter simulation
     bpy.context.active_object.rigid_body.friction = 0.99
     bpy.context.active_object.rigid_body.collision_shape = 'MESH'
+    bpy.context.active_object.rigid_body.collision_margin = 0.004
 
 
 def generate():

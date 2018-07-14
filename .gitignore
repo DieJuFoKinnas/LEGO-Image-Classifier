@@ -1,12 +1,10 @@
-.ipynb_checkpoints
-.idea/
 renders/
 Classifiers/mnist_convnet_model
 Classifiers/mnist_nce_model
 Classifiers/mnist_capsnet_model
-Classifiers/__pycache__
 Classifiers/MNIST-data
-Classifiers/.idea
+*/.ipynb_checkpoints
+*/.idea
+*/__pycache
 *.jpeg
-*.blend1
 *.pyc
