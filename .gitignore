@@ -9,3 +9,4 @@ Classifiers/MNIST-data
 *.jpeg
 *.pyc
 *.png
+.atom-build.yml
