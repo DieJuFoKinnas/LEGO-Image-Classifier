@@ -68,14 +68,6 @@ def load_settings():
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
 
 
-def load_lego_material():
-    lego_material = bpy.data.materials.new(name = 'lego_material')
-    # modify m_lego diffuse color
-    lego_material.diffuse_color = (.8,.8,0)
-    # m_lego.node_tree###https://blender.stackexchange.com/questions/23436/control-cycles-material-nodes-and-material-properties-in-python
-    return lego_material
-
-
 def load_light_material():
     light_material = bpy.data.materials.new(name = "light_material")
     light_material.use_nodes = True
@@ -130,7 +122,6 @@ def add_base_plate():
 
 def generate():
     clear_everything()
-    lego_material = load_lego_material()
     light_material = load_light_material()
     add_light("light_1", light_material, 45, 7)
     add_light("light_2", light_material, -45, -7)
@@ -138,5 +129,3 @@ def generate():
 
     add_base_plate()
     setup_camera(pi_cam_specs, "pi_cam")
-    
-    return lego_material

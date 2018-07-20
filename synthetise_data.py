@@ -120,9 +120,7 @@ def position_piece(lego_piece, min_height=0.2, average_height=0.3, std_dev=0.4):
     lego_piece.rotation_euler = uniform(0, 2*math.pi),uniform(0, 2*math.pi),uniform(0, 2*math.pi)
 
 
-def make_rigid(lego_piece, lego_material):
-    lego_piece.data.materials.append(lego_material)
-
+def make_rigid(lego_piece):
     # you have to also make the piece active so it lets you add the rigidbody
     bpy.context.scene.objects.active = lego_piece
     bpy.ops.object.select_all(action='DESELECT')
@@ -184,11 +182,11 @@ def render(render_path, shot_name):
 # (this is documented in the ldraw piece numbering FAQ) or by checking for a completely flat z-dimension(probably easier))
 # use this for testing purposes by importing it in the console
 def debug_load(name):
-    lego_material = generate_base_scene.generate()
+    generate_base_scene.generate()
     lego_piece = join_components(load_piece("{}/{}".format(models_path, name)))
     position_camera(scene.camera)
     position_piece(lego_piece)
-    make_rigid(lego_piece, lego_material)
+    make_rigid(lego_piece)
     simulate_drop(lego_piece)
     
     ctx = generate_base_scene.get_view3d_context()
@@ -207,7 +205,7 @@ if __name__ == "__main__":
         lego_piece = join_components(components)
 
         position_piece(lego_piece)
-        make_rigid(lego_piece, lego_material)
+        make_rigid(lego_piece)
         for simulation_number in range(simulations_per_model):
             position_piece(lego_piece)
             simulate_drop(lego_piece)
