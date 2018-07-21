@@ -8,5 +8,6 @@ Classifiers/MNIST-data
 */__pycache
 *.jpeg
 *.pyc
-*.png
+out.png
+mask.png
 .atom-build.yml

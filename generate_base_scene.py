@@ -10,7 +10,6 @@ import math
 # Angle of View: 62.2 x 48.8 degrees
 # Full-frame SLR lens equivalent: 29 mm
 pi_cam_specs = { "lens": 3.04, "sensor_width": 3.674, "sensor_height": 2.760 }
-# NOTE: when using lower resolutions the frame gets smaller, so the camera has to be placed
 # proportionally further
 
 # camera intrinsics for Pi Camera v1
